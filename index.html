@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy Birthday, Birthday Star</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Caveat:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ======= Preloader ======= -->
+  <div class="preloader" id="preloader" aria-hidden="true">
+    <span class="preloader-star">✦</span>
+    <p class="preloader-text">preparing the magic…</p>
+  </div>
+
+  <!-- ======= Scroll progress bar ======= -->
+  <div class="progress-bar" id="progressBar" aria-hidden="true"></div>
+
+  <!-- ======= Animated night sky canvas (fixed behind everything) ======= -->
+  <canvas id="stars"></canvas>
+
+  <!-- ======= Floating fireflies (fixed, above content) ======= -->
+  <div class="fireflies" id="fireflies" aria-hidden="true"></div>
+
+  <!-- ======= Top navigation ======= -->
+  <nav class="nav" id="nav">
+    <a class="nav-brand" href="#hero">BD<span class="nav-brand-dot">.</span></a>
+    <div class="nav-links">
+      
+    </div>
+  </nav>
+
+  <!-- ================================================================
+       SMOOTH CONTENT (everything that scrolls)
+  ================================================================= -->
+  <div id="smooth-wrapper">
+    <div id="smooth-content">
+
+      <!-- ======= 1 · HERO ======= -->
+      <header class="hero" id="hero">
+        <div class="moon-wrap" data-speed="0.8">
+          <div class="moon" id="moon">
+            <div class="moon-crater c1"></div>
+            <div class="moon-crater c2"></div>
+            <div class="moon-crater c3"></div>
+          </div>
+        </div>
+
+        <div class="hero-sparkles" data-speed="1.25" id="heroSparkles"></div>
+
+        <div class="hero-content" id="heroContent">
+          <p class="hero-eyebrow" data-hero="eyebrow">Tonight, the sky holds its breath…</p>
+          <h1 class="hero-title" id="heroTitle" aria-label="Happy Birthday, Birthday Star">
+            <span class="title-line"><span class="title-script">Happy</span></span>
+            <span class="title-line"><span class="title-word">Birthday</span></span>
+            <span class="title-line"><span class="title-name">Birthday Star</span></span>
+          </h1>
+          <p class="hero-sub" data-hero="sub">A little universe was written in the stars — and it has your name on it.</p>
+          <button class="hero-btn" id="scrollBtn">Begin the magic</button>
+        </div>
+
+        <div class="scroll-cue" id="scrollCue">
+          <span class="scroll-cue-line"></span>
+          <span class="scroll-cue-text">scroll</span>
+        </div>
+
+        <div class="hero-wisps" data-speed="1.15">
+          <div class="wisp w1"></div>
+          <div class="wisp w2"></div>
+          <div class="wisp w3"></div>
+        </div>
+      </header>
+
+      <!-- ======= 2 · INTRO QUOTE ======= -->
+      <section class="section intro" id="intro">
+        <div class="intro-line quote-line">
+          <p class="quote-main">Some people come into your life quietly,</p>
+          <p class="quote-main">and then one day you realise</p>
+          <p class="quote-main">they turned your whole world</p>
+          <p class="quote-main accent">into something golden.</p>
+        </div>
+        <p class="intro-sign">— written for the one who lights up the dark</p>
+      </section>
+
+      <!-- ======= 3 · REASONS ======= -->
+      <section class="section reasons" id="reasons">
+        <div class="section-head">
+          <p class="section-eyebrow">reasons, not just one</p>
+          <h2 class="section-title">Why You Are <em>Special</em></h2>
+          <p class="section-sub">A few of the million reasons the universe decided to keep you.</p>
+        </div>
+
+        <div class="cards">
+          <article class="card" data-card>
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.9-10-9.3C.3 8.6 1.9 4.8 5.3 4.3c2-.3 3.9.6 5 2.3a5.6 5.6 0 0 1 5-2.3c3.4.5 5 4.3 3.3 7.4C19.5 16.1 12 21 12 21z"/></svg></div>
+            <h3>Your Heart</h3>
+            <p>The way you understand what a person might going through. The Kindness after those harsh conversation always melts my heart.</p>
+          </article>
+
+          <article class="card" data-card>
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l1.9 6.3 6.6.1-5.3 3.9 2 6.3-5.2-3.9-5.2 3.9 2-6.3L4.5 7.9l6.6-.1z"/><path d="M19.5 1l.8 2.6 2.7.1-2.2 1.6.8 2.5-2.1-1.6z" opacity=".7"/></svg></div>
+            <h3>Your Light</h3>
+            <p>I never paid much attention to the stars until i realized you're the reason they shine.</p>
+          </article>
+
+          <article class="card" data-card>
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.8 12S5.6 5.5 12 5.5 22.2 12 22.2 12 18.4 18.5 12 18.5 1.8 12 1.8 12z"/><circle cx="12" cy="12" r="3.2"/></svg></div>
+            <h3>Your Eyes</h3>
+            <p>I don't think there is any chance of me getting lost in your eyes because the deeper i go, the more i reach to my destination.</p>
+          </article>
+
+          <article class="card" data-card>
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.2 2 3.5 2 3.5-2 3.5-2"/><path d="M9.2 9.4h.01M14.8 9.4h.01"/></svg></div>
+            <h3>Your Smile</h3>
+            <p>How perfectly that smile fits on your face! looking at it feels like exploring the whole world all at once.</p>
+          </article>
+
+          <article class="card" data-card>
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17h18l-2-7.5a2 2 0 0 0-2-1.5H7a2 2 0 0 0-2 1.5z"/><path d="M5.5 9.5 6 5h3.5l-.7 4.5zM12 5l.5 4.5L12 15l-.5-5.5zM18.5 9.5 18 5h-3.5l.7 4.5z"/></svg></div>
+            <h3>Your Presence</h3>
+            <p>I've never been with you but i imagine it would be as beautiful as sitting next to a fireplace on the coldest night.</p>
+          </article>
+
+          <article class="card" data-card>
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 6.6 7-.1-5.6 4.1 2.1 6.6-5.9-4.2-5.9 4.2 2.1-6.6L2.6 8.5l7 .1z"/></svg></div>
+            <h3>Just You</h3>
+            <p>No list can hold you. Not mine, not a thousand more. You are simply, completely, irreplaceably you.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ======= 4 · WISHES — pinned horizontal scroll ======= -->
+      <section class="section wishes" id="wishes">
+        <div class="section-head">
+          <p class="section-eyebrow">if I could write it in the sky</p>
+          <h2 class="section-title">Wishes For <em>Your Year</em></h2>
+        </div>
+
+        <div class="wishes-viewport">
+          <div class="wishes-track" id="wishesTrack">
+            <article class="wish-card">
+              <span class="wish-num">01</span>
+              <h3 class="wish-title">Endless Laughter</h3>
+              <p>May your days be stitched with laughter that echoes for years — the kind that makes your cheeks ache and your heart remember why it's here.</p>
+            </article>
+
+            <article class="wish-card">
+              <span class="wish-num">02</span>
+              <h3 class="wish-title">Soft Evenings</h3>
+              <p>May your evenings stay soft and golden, and may every star above quietly take your side.</p>
+            </article>
+
+            <article class="wish-card">
+              <span class="wish-num">03</span>
+              <h3 class="wish-title">Bold Dreams</h3>
+              <p>May the dreams you whisper at midnight grow loud enough to rearrange the sky.</p>
+            </article>
+
+            <article class="wish-card">
+              <span class="wish-num">04</span>
+              <h3 class="wish-title">Gentle Hearts</h3>
+              <p>May every heart you meet be as kind to you as you have always been to the world.</p>
+            </article>
+
+            <article class="wish-card">
+              <span class="wish-num">05</span>
+              <h3 class="wish-title">A Year of You</h3>
+              <p>May this year hand you everything your heart has been quietly asking for — and then a little more.</p>
+            </article>
+
+            
+          </div>
+
+          <div class="wishes-progress" aria-hidden="true"><span id="wishesProgress"></span></div>
+        </div>
+      </section>
+
+      <!-- ======= 5 · INTERLUDE — giant parallax line ======= -->
+      <section class="section interlude" id="interlude">
+        <p class="interlude-text">there is no one</p>
+        <p class="interlude-text accent">quite like you.</p>
+      </section>
+
+      <!-- ======= 6 · TIMELINE OF MOMENTS ======= -->
+      <section class="section timeline" id="timeline">
+        <div class="section-head">
+          <p class="section-eyebrow">our little galaxy</p>
+          <h2 class="section-title">Moments I Keep <em>Close</em></h2>
+          <p class="section-sub">Every day with you quietly became a memory worth framing.</p>
+        </div>
+
+        <div class="timeline-wrap">
+          <div class="timeline-line"><span class="timeline-fill" id="timelineFill"></span></div>
+
+          <div class="tl-item" data-tl>
+            <div class="tl-dot"></div>
+            <div class="tl-card">
+              <span class="tl-date">The Day We Met</span>
+              <p>Somewhere in an ordinary day, the universe dropped you in front of me — and everything has had a soundtrack since.</p>
+            </div>
+          </div>
+
+          <div class="tl-item" data-tl>
+            <div class="tl-dot"></div>
+            <div class="tl-card">
+              <span class="tl-date">The First Laugh</span>
+              <p>The first time you laughed at something I said, I decided right then to spend the rest of my time collecting that sound.</p>
+            </div>
+          </div>
+
+          <div class="tl-item" data-tl>
+            <div class="tl-dot"></div>
+            <div class="tl-card">
+              <span class="tl-date">The Late Night Talks</span>
+              <p>Hours that felt like minutes, talking about everything and nothing. The stars were jealous of how long we stayed up.</p>
+            </div>
+          </div>
+
+          <div class="tl-item" data-tl>
+            <div class="tl-dot"></div>
+            <div class="tl-card">
+              <span class="tl-date">Every Today</span>
+              <p>And now — today. Another chapter of you, another year of light. And I still can't believe I get to be near it.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======= 7 · LETTERS ======= -->
+      <section class="section letters" id="letters">
+        <div class="section-head">
+          <p class="section-eyebrow">handwritten under moonlight</p>
+          <h2 class="section-title">A Few Words, <em>Just For You</em></h2>
+        </div>
+
+        <div class="letter-card" id="letterCard">
+          <div class="letter-pin"></div>
+          <p class="letter-line" data-line="0">My dearest Birthday Star,</p>
+          <p class="letter-line" data-line="1">Today the sky has one more reason to sparkle — you.</p>
+          <p class="letter-line" data-line="2">I don't have enough stars to count the ways you matter.</p>
+          <p class="letter-line" data-line="3">So I counted the ways you make me smile instead —</p>
+          <p class="letter-line" data-line="4">and I ran out of numbers long before I ran out of you.</p>
+          <p class="letter-line" data-line="5">May this year hand you everything your heart has been quietly asking for.</p>
+          <p class="letter-line" data-line="6">May you be loved loudly, understood deeply,</p>
+          <p class="letter-line" data-line="7">and may you always believe how extraordinary you are.</p>
+          <p class="letter-sign" data-line="8">Forever yours, always.</p>
+        </div>
+      </section>
+
+      <!-- ======= 8 · BLOOM — the moonflower reveal ======= -->
+      <section class="section bloom" id="bloom">
+        <div class="balloons-wrap" data-speed="1.5">
+          <div class="balloons" id="balloons" aria-hidden="true">
+            <div class="balloon b1"></div>
+            <div class="balloon b2"></div>
+            <div class="balloon b3"></div>
+            <div class="balloon b4"></div>
+            <div class="balloon b5"></div>
+            <div class="balloon b6"></div>
+          </div>
+        </div>
+
+        <div class="section-head">
+          <p class="section-eyebrow">a secret the moon kept</p>
+          <h2 class="section-title">The Night Kept a <em>Flower</em></h2>
+          <p class="section-sub">They say the rarest things only ever show themselves under the moon.</p>
+        </div>
+
+        <div class="bloom-stage" id="bloomStage">
+          <div class="bloom-scene">
+            <div class="bloom-flower" id="bloomFlower">
+              <span class="bloom-halo"></span>
+              <span class="petal p1"></span>
+              <span class="petal p2"></span>
+              <span class="petal p3"></span>
+              <span class="petal p4"></span>
+              <span class="petal p5"></span>
+              <span class="petal p6"></span>
+              <span class="petal p7"></span>
+              <span class="petal p8"></span>
+              <span class="bloom-bud" id="bloomBud"></span>
+              <figure class="bloom-photo" id="bloomPhoto">
+                <img src="img/her.jpg" alt="Birthday Star" />
+              </figure>
+            </div>
+            <span class="bloom-stem" id="bloomStem">
+              <span class="bloom-leaf l1"></span>
+              <span class="bloom-leaf l2"></span>
+            </span>
+          </div>
+
+          <div class="bloom-lines">
+            <p class="bloom-line l1">every flower I know blooms for the sun —</p>
+            <p class="bloom-line l2 accent">but the rarest one blooms under the moon.</p>
+            <p class="bloom-line l3">…and the moon kept it, just for you.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======= 9 · THE QUESTION — did you like it? ======= -->
+      <section class="section question" id="question">
+        <div class="question-box">
+          <p class="question-eyebrow">one last thing…</p>
+          <h2 class="question-title">Did you <em>like</em> it?</h2>
+          <div class="question-btns" id="questionBtns">
+            <button class="qbtn qbtn-yes" id="qYes">Yes, I loved it</button>
+            <button class="qbtn qbtn-no" id="qNo">No</button>
+          </div>
+          <p class="question-reply" id="qReply">I knew you'd say yes. 💛<br/><span class="question-reply-sub">(that "no" button was never going to work, by the way)</span></p>
+        </div>
+      </section>
+
+      <!-- ======= 10 · FINALE ======= -->
+      <section class="section finale" id="finale">
+        <canvas id="fireworks"></canvas>
+        <div class="finale-content">
+          <p class="finale-eyebrow">one more thing…</p>
+          <h2 class="finale-title" id="finaleTitle">Happy Birthday</h2>
+          <p class="finale-line">May every year from now feel like this page —<br/>lit up, magical, and written all about you.</p>
+          <p class="finale-sign">with all my love, always</p>
+        </div>
+        <p class="finale-fade">⋆ ⋆ ⋆</p>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ======= Music disc (fixed, spins while playing) ======= -->
+  <button class="disc" id="disc" aria-label="Play music" title="Play the magic">
+    <span class="disc-hole"></span>
+    <span class="disc-note">
+      <svg viewBox="0 0 24 24" fill="currentColor" id="discNoteIcon"><path d="M9 18V6l10-2v11a3 3 0 1 1-2-2.83V7.36l-6 1.2V18a3 3 0 1 1-2-2.83z"/></svg>
+    </span>
+    <span class="disc-glow"></span>
+  </button>
+
+  <audio id="bgMusic" loop preload="auto" src="music/song.mp3"></audio>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/ScrollSmoother.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.15.0/SplitText.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
