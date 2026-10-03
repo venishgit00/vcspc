@@ -351,55 +351,138 @@
   });
 
   /* ------------------------------------------------------------
-     8 · REASONS CARDS — staggered rise + scroll-velocity tilt
+     8 · REASONS — a constellation that draws itself
   ------------------------------------------------------------ */
-  const cards = $$("[data-card]");
-  cards.forEach((card) => {
-    gsap.from(card, {
-      y: 70,
-      opacity: 0,
-      rotateX: 14,
-      duration: 1,
-      ease: "power3.out",
-      scrollTrigger: { trigger: card, start: "top 88%", toggleActions: "play none none reverse" },
-    });
-  });
+  const cstField  = $("#constellation");
+  const cstLine   = $("#cstLine");
+  const cstGlow   = $("#cstGlow");
+  const cstWalker = $("#cstWalker");
+  const cstNodes  = $$("[data-cst]");
+  const cstPaths  = [cstLine, cstGlow].filter(Boolean);
+  let cstLen = 0;
+  let cstMeasured = false;
 
-  if (!reduceMotion) {
-    cards.forEach((card) => {
-      ScrollTrigger.create({
-        trigger: card,
-        start: "top bottom",
-        end: "bottom top",
-        onUpdate: (self) => {
-          const v = gsap.utils.clamp(-7, 7, self.getVelocity() / -60);
-          gsap.to(card, {
-            rotateX: v,
-            rotateY: v * -0.5,
-            duration: 0.5,
-            ease: "power2.out",
-            overwrite: "auto",
-          });
-        },
-      });
-    });
+  function smoothPath(pts) {
+    if (pts.length < 2) return "";
+    let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[i + 2] || p2;
+      const c1x = p1.x + (p2.x - p0.x) / 6;
+      const c1y = p1.y + (p2.y - p0.y) / 6;
+      const c2x = p2.x - (p3.x - p1.x) / 6;
+      const c2y = p2.y - (p3.y - p1.y) / 6;
+      d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+    }
+    return d;
   }
 
-  /* Parallax drift on the icon */
-  $$("[data-card] .card-icon").forEach((icon) => {
-    gsap.to(icon, {
-      y: -12,
-      ease: "none",
-      scrollTrigger: { trigger: icon.parentElement, start: "top bottom", end: "bottom top", scrub: 0.6 },
+  function buildConstellation() {
+    if (!cstField || !cstLine || !cstNodes.length) return;
+    const box = cstField.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+
+    /* measure every star, then stitch a smooth curve through them */
+    const pts = cstNodes.map((node) => {
+      const dot = node.querySelector(".cst-dot").getBoundingClientRect();
+      return { x: dot.left + dot.width / 2 - box.left, y: dot.top + dot.height / 2 - box.top };
     });
-  });
+
+    const d = smoothPath(pts);
+    cstLine.parentNode.setAttribute("viewBox", `0 0 ${box.width.toFixed(1)} ${box.height.toFixed(1)}`);
+    cstPaths.forEach((p) => p.setAttribute("d", d));
+
+    try {
+      cstLen = cstLine.getTotalLength();
+    } catch (err) {
+      cstLen = 0;
+      return;
+    }
+
+    cstPaths.forEach((p) => {
+      p.style.strokeDasharray = cstLen;
+      /* only seed the hidden state once — after that the timeline owns it,
+         so a refresh can never strand a scrolled-past line in mid-draw */
+      if (!cstMeasured || reduceMotion) p.style.strokeDashoffset = reduceMotion ? 0 : cstLen;
+    });
+    cstMeasured = true;
+  }
+
+  if (cstField && cstLine && cstNodes.length) {
+    /* scattered background stars */
+    for (let i = 0; i < 30; i++) {
+      const s = document.createElement("span");
+      s.className = "cst-field-star";
+      const size = gsap.utils.random(1.2, 3.2);
+      s.style.left = gsap.utils.random(0, 100).toFixed(2) + "%";
+      s.style.top = gsap.utils.random(0, 100).toFixed(2) + "%";
+      s.style.width = s.style.height = size.toFixed(1) + "px";
+      s.style.animationDuration = gsap.utils.random(2.4, 6).toFixed(2) + "s";
+      s.style.animationDelay = (-gsap.utils.random(0, 6)).toFixed(2) + "s";
+      cstField.appendChild(s);
+    }
+
+    buildConstellation();
+
+    const cstOrbs = cstNodes.map((n) => n.querySelector(".cst-orb"));
+    const cstLabels = cstNodes.map((n) => n.querySelector(".cst-label"));
+
+    if (!reduceMotion) {
+      const cstTL = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: {
+          trigger: "#reasons",
+          start: "top 74%",
+          end: "bottom 70%",
+          scrub: 0.8,
+          invalidateOnRefresh: true,
+          onRefresh: buildConstellation,
+        },
+      });
+
+      /* the line writes itself across the sky */
+      cstTL.fromTo(cstPaths, { strokeDashoffset: () => cstLen }, { strokeDashoffset: 0, duration: 5 }, 0);
+
+      /* and one star at a time takes its place */
+      cstOrbs.forEach((orb, i) => {
+        cstTL
+          .fromTo(orb, { scale: 0, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2.4)" }, 1.3 + i * 0.2)
+          .fromTo(cstLabels[i], { opacity: 0, y: 26 },
+            { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 1.44 + i * 0.2);
+      });
+
+      /* a spark of light runs the line as it draws */
+      if (cstWalker) {
+        cstTL.fromTo(cstWalker, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.1)
+             .to(cstWalker, { opacity: 0, duration: 0.4 }, 4.8);
+
+        ScrollTrigger.create({
+          trigger: "#reasons",
+          start: "top 74%",
+          end: "bottom 70%",
+          scrub: true,
+          onUpdate: (self) => {
+            if (!cstLen) return;
+            const pt = cstLine.getPointAtLength(cstLen * self.progress);
+            cstWalker.style.transform = `translate(${pt.x}px, ${pt.y}px) translate(-50%, -50%)`;
+          },
+        });
+      }
+    } else {
+      gsap.set(cstOrbs, { scale: 1, opacity: 1 });
+      gsap.set(cstLabels, { opacity: 1, y: 0 });
+    }
+  }
 
   
   /* ------------------------------------------------------------
-   9 · WISHES — pinned horizontal scroll
------------------------------------------------------------- */
-const wishesTrack = $("#wishesTrack");
-const wishesViewport = $(".wishes-viewport");
+     9 · WISHES — pinned horizontal scroll
+  ------------------------------------------------------------ */
+  const wishesTrack = $("#wishesTrack");
+  const wishesViewport = $(".wishes-viewport");
 
 if (wishesTrack && wishesViewport && !reduceMotion) {
 
@@ -414,7 +497,45 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
 
   const getEnd = () => "+=" + getDist();
 
-  gsap.to(wishesTrack, {
+  /* ---- depth: each lantern dims, softens and drifts as it passes ---- */
+  const wishCards = $$("[data-wish]");
+  const wishLifts = wishCards.map((_, i) => (i % 2 ? 1 : -1) * 22);
+
+  function paintWishes() {
+    if (!wishCards.length) return;
+    const vw = window.innerWidth;
+    wishCards.forEach((card, i) => {
+      const r = card.getBoundingClientRect();
+      if (!r.width) return;
+      const p = gsap.utils.clamp(-1.5, 1.5, (r.left + r.width / 2 - vw / 2) / (vw / 2));
+      const near = 1 - Math.min(1, Math.abs(p));
+      card.style.setProperty("--near", near.toFixed(3));
+      if (reduceMotion) return;
+      gsap.set(card, {
+        opacity: 0.5 + near * 0.5,
+        scale: 0.93 + near * 0.07,
+        y: wishLifts[i] + p * 34,
+      });
+    });
+  }
+
+  /* ---- the sky drifts behind the lanterns ---- */
+  const wishesSky = $("#wishesSky");
+  if (wishesSky) {
+    for (let i = 0; i < 46; i++) {
+      const s = document.createElement("span");
+      s.className = "wishes-sky-star";
+      const size = gsap.utils.random(1.2, 3);
+      s.style.left = gsap.utils.random(0, 100).toFixed(2) + "%";
+      s.style.top = gsap.utils.random(0, 100).toFixed(2) + "%";
+      s.style.width = s.style.height = size.toFixed(1) + "px";
+      s.style.animationDuration = gsap.utils.random(2.6, 6.4).toFixed(2) + "s";
+      s.style.animationDelay = (-gsap.utils.random(0, 6.4)).toFixed(2) + "s";
+      wishesSky.appendChild(s);
+    }
+  }
+
+  const trackTween = gsap.to(wishesTrack, {
     x: () => -getDist(),
     ease: "none",
 
@@ -427,10 +548,19 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
       scrub: 1,
       anticipatePin: 1,
       invalidateOnRefresh: true,
-
-      // markers: true,
+      onRefresh: paintWishes,
     },
+
+    onUpdate: paintWishes,
   });
+
+  if (wishesSky) {
+    gsap.to(wishesSky, {
+      x: () => -getDist() * 0.32,
+      ease: "none",
+      scrollTrigger: trackTween.scrollTrigger,
+    });
+  }
 
   gsap.to("#wishesProgress", {
     scaleX: 1,
@@ -446,9 +576,13 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
     },
   });
 
+  paintWishes();
+
   // Important when using Google Fonts and responsive layouts.
   window.addEventListener("load", () => {
+    buildConstellation();
     ScrollTrigger.refresh();
+    paintWishes();
   });
 }
 
