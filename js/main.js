@@ -759,17 +759,23 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
   ------------------------------------------------------------ */
   const letterLines = $$(".letter-line, .letter-sign");
   if (!reduceMotion && letterLines.length) {
+    // Short, viewport-relative pin: the letter writes itself in about
+    // one scroll instead of drifting the card far below the heading.
+    const letterDist = () =>
+      Math.min(letterLines.length * 130, window.innerHeight * 1.1);
+
     gsap.fromTo(letterLines,
       { opacity: 0, y: 16 },
       {
         opacity: 1, y: 0, stagger: 0.45, ease: "none",
         scrollTrigger: {
           trigger: "#letterCard",
-          start: "top 82%",
-          end: () => "+=" + letterLines.length * 300,
+          start: "top 68%",
+          end: () => "+=" + letterDist(),
           pin: true,
           scrub: 1,
           anticipatePin: 1,
+          invalidateOnRefresh: true,
         },
       }
     );
