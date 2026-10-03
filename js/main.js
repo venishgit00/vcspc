@@ -447,7 +447,7 @@
        copy and the star honest to each other on every screen size. Measured by
        walking the path, not guessed from x position, because a node's dot can
        sit anywhere along --dx inside its own column. */
-    const cstStopAt = (self, i) => {
+    const cstStopAt = (i) => {
       if (!cstLen) return 1;
       const node = cstNodes[i];
       const dot = node && node.querySelector(".cst-dot");
@@ -477,6 +477,14 @@
       return Math.min(1, Math.max(0, (lo + hi) / 2));
     };
 
+    /* Where each star sits along the line. This is pure geometry: the path and
+       the star positions only move when the layout does, so measuring it on
+       every frame meant ~470 getPointAtLength calls (each one a forced layout
+       read) per frame just to recompute a value that had not changed. Caching
+       it on refresh is what removes that stutter; only the progress-driven
+       opacity/scale below still runs per frame. */
+    let cstStops = [];
+
     /* Each star lights up as the spark arrives at it. The distance and the
        arrival point are re-read every frame, so rotating the phone or resizing
        re-times the whole reveal to the new geometry instead of keeping
@@ -494,7 +502,8 @@
         const orb = cstOrbs[i], label = cstLabels[i];
         if (!orb || !label) continue;
 
-        const arrive = cstStopAt(self, i);
+        const arrive = cstStops[i];
+        if (arrive === undefined) continue;
         /* finish the reveal just ahead of the spark */
         const t = Math.min(1, Math.max(0, (self.progress - (arrive - POP)) / POP));
         const pop = t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.pow(1 - t, 3);
@@ -509,13 +518,62 @@
         ? { trigger: "#reasons", start: "top top", end: cstEnd, pin: true, anticipatePin: 1 }
         : { trigger: "#reasons", start: "top 74%", end: "bottom 70%" };
 
-      const cstTL = gsap.timeline({
+      /* The spark rides the line, so it has to be moved by the SAME smoothed value
+         that draws the line. It used to sit on its own scrub:true trigger,
+         which applies no smoothing at all — the spark therefore jumped to raw
+         scroll position while the line it was travelling along eased, and the
+         two visibly juddered against each other. */
+      let sparkP = 0;
+      const moveSpark = () => {
+        if (!cstWalker || !cstLen) return;
+        const pt = cstLine.getPointAtLength(cstLen * sparkP);
+        cstWalker.style.transform = `translate(${pt.x}px, ${pt.y}px) translate(-50%, -50%)`;
+      };
+
+      /* measure the arrival points once per layout, not once per frame */
+      const measureStops = () => {
+        buildConstellation();
+        cstStops = cstNodes.map((_, i) => cstStopAt(i));
+      };
+      measureStops();
+
+      /* Everything reads this one scrubbed playhead. It used to be split across
+         the timeline's own trigger plus a second trigger just for the arrivals
+         and the spark; two independently smoothed playheads drift against each
+         other by a frame or two, which reads as judder. One playhead means the
+         line, the spark, the travelling stage and the copy are all locked to
+         the same eased value on the same frame. Declared before cstTL so the
+         timeline's config can reference it — ScrollTrigger refreshes the moment
+         it is created, which would hit a not-yet-initialised binding. */
+      let cstTL = null;
+      const syncPlayhead = () => {
+        if (!cstTL) return;
+        const p = cstTL.progress();
+        sparkP = p;
+        moveSpark();
+        revealOnArrival({ progress: p });
+      };
+
+      cstTL = gsap.timeline({
         defaults: { ease: "none" },
+        /* This has to hang off the TIMELINE, not the ScrollTrigger.
+           ScrollTrigger's own onUpdate only fires on a scroll event, but with
+           scrub the playhead keeps easing for a while after the finger stops —
+           so driving the spark and the copy from onUpdate updated them in
+           discrete jumps and then froze for the rest of each ease, which is
+           exactly the stutter this section had. The timeline's onUpdate fires
+           on every rendered frame of that ease instead. */
+        onUpdate: syncPlayhead,
         scrollTrigger: {
           ...cstRange,
-          scrub: 0.8,
+          /* long enough to iron out finger jitter without the section feeling
+             like it is lagging behind the scroll */
+          scrub: 0.55,
           invalidateOnRefresh: true,
-          onRefresh: buildConstellation,
+          /* rebuild the path and re-measure where each star sits on it, then
+             repaint at the current point so a resize can't leave the stars
+             blank or stuck at full brightness */
+          onRefresh: () => { measureStops(); syncPlayhead(); },
         },
       });
 
@@ -534,45 +592,6 @@
              .to(cstWalker, { opacity: 0, duration: 0.4 }, 4.8);
       }
 
-      /* one scrubbed pass drives the spark's position */
-      if (cstWalker) {
-        ScrollTrigger.create({
-          ...cstRange,
-          pin: false,
-          scrub: true,
-          onUpdate: (self) => {
-            if (!cstLen) return;
-            const pt = cstLine.getPointAtLength(cstLen * self.progress);
-            cstWalker.style.transform = `translate(${pt.x}px, ${pt.y}px) translate(-50%, -50%)`;
-          },
-        });
-      }
-
-      /* The arrivals have to ride the SAME smoothing as the stage, so they use
-         the timeline's scrub value rather than raw scroll progress. Reading
-         progress off a trigger with no animation attached would fire every pop
-         up to a full scrub-length early — a star would light while still off
-         the side of the screen. This runs on desktop too, where the spark
-         still walks the line and the copy must meet it at the same moment. */
-      {
-        const cstReveal = { p: 0 };
-        gsap.to(cstReveal, {
-          p: 1,
-          ease: "none",
-          scrollTrigger: {
-            ...cstRange,
-            pin: false,
-            scrub: 0.8,
-            invalidateOnRefresh: true,
-            /* rebuild the path, then repaint the stars at whatever point of
-               the journey we are already at, so a resize can't leave them
-               blank or stuck at full brightness */
-            onRefresh: () => { buildConstellation(); revealOnArrival({ progress: cstReveal.p }); },
-          },
-          onUpdate: () => revealOnArrival({ progress: cstReveal.p }),
-        });
-      }
-
       /* on phones the whole star map slides in from the right, paced to
          exactly the same stretch of scroll as the line drawing itself — added
          last so its duration covers the finished timeline, not a partial one */
@@ -581,8 +600,13 @@
       }
 
       /* seed the hidden state so no star ever flashes in before the first
-         scroll lands */
-      if (cstSideways) revealOnArrival({ progress: 0 });
+         scroll lands, and spark/line sit at the start of the journey */
+      syncPlayhead();
+      if (cstWalker && cstLen) {
+        cstWalker.style.transform =
+          `translate(${cstLine.getPointAtLength(0).x}px, ${cstLine.getPointAtLength(0).y}px) translate(-50%, -50%)`;
+      }
+      gsap.set(cstPaths, { strokeDashoffset: cstLen });
     } else {
       gsap.set(cstOrbs, { scale: 1, opacity: 1 });
       gsap.set(cstLabels, { opacity: 1, y: 0 });
