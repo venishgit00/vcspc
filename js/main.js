@@ -535,9 +535,11 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
     }
   }
 
-  const trackTween = gsap.to(wishesTrack, {
-    x: () => -getDist(),
-    ease: "none",
+  /* both travel tweens live in ONE timeline, so the section is pinned
+     exactly once — sharing a pinned ScrollTrigger would pin it twice and
+     the section would slide away as soon as you reached it */
+  const wishesTL = gsap.timeline({
+    defaults: { ease: "none" },
 
     scrollTrigger: {
       trigger: "#wishes",
@@ -554,13 +556,8 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
     onUpdate: paintWishes,
   });
 
-  if (wishesSky) {
-    gsap.to(wishesSky, {
-      x: () => -getDist() * 0.32,
-      ease: "none",
-      scrollTrigger: trackTween.scrollTrigger,
-    });
-  }
+  wishesTL.to(wishesTrack, { x: () => -getDist(), ease: "none" }, 0);
+  if (wishesSky) wishesTL.to(wishesSky, { x: () => -getDist() * 0.32, ease: "none" }, 0);
 
   gsap.to("#wishesProgress", {
     scaleX: 1,
