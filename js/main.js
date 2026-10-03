@@ -13,20 +13,39 @@
   const $  = (s, c = document) => c.querySelector(s);
   const $$ = (s, c = document) => Array.from(c.querySelectorAll(s));
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const finePointer = window.matchMedia("(pointer: fine)").matches;
+  const isTouch = !finePointer;
 
   /* ------------------------------------------------------------
      0 · SMOOTH SCROLLING
   ------------------------------------------------------------ */
+
+  /* ScrollSmoother takes touch scrolling away from the browser and re-drives it
+     from JS, so a phone loses the native momentum its compositor was already
+     doing for free — and every dropped frame turns into visible lag. That is
+     what made this page feel sticky on mobile while staying smooth on desktop.
+     It is now pointer-fine only; touch falls back to native scrolling, which
+     ScrollTrigger pins and scrubs handle perfectly well. Both scrollTo() call
+     sites below already guard on `smoother` and fall back to scrollIntoView. */
   let smoother = null;
-  if (!reduceMotion) {
+  if (!reduceMotion && finePointer) {
     smoother = ScrollSmoother.create({
       wrapper: "#smooth-wrapper",
       content: "#smooth-content",
       smooth: 1.2,
       effects: true,
-      smoothTouch: 0.1,
     });
   }
+
+  /* `scrub` is a catch-up duration, not a speed: the animation keeps easing
+     for that many seconds AFTER the finger stops. A full second of catch-up is
+     unnoticeable with a mouse but reads as the page refusing to keep up with
+     you on a phone — and while a pinned section is still easing it stays
+     frozen in place, which is the "sticky" feeling exactly. */
+  const scrubHold = isTouch ? 0.3  : 1;    // pinned sections
+  const scrubSoft = isTouch ? 0.25 : 0.55; // constellation draw-on
+  const scrubLine = isTouch ? 0.25 : 0.6;  // timeline fill
+  const scrubBar  = isTouch ? 0.15 : 0.3;  // progress bar
 
   /* ------------------------------------------------------------
      1 · STARFIELD  (fixed canvas behind everything)
@@ -113,7 +132,22 @@
   } else {
     drawStars(0);
   }
-  window.addEventListener("resize", () => { sizeCanvas(); makeStars(); });
+  /* Mobile browsers fire `resize` continuously while the address bar slides in
+     and out mid-scroll. That is not a real resize, and reacting to it meant
+     re-seeding every star in the middle of a scroll. Debounced, and the small
+     height-only wobble is ignored — the canvas is position:fixed, so an
+     over-tall canvas just gets cropped rather than looking wrong. */
+  let starResizeTimer = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(starResizeTimer);
+    starResizeTimer = setTimeout(() => {
+      const wChanged = Math.abs(window.innerWidth - W) > 2;
+      const hChanged = Math.abs(window.innerHeight - H) > 140;
+      if (!wChanged && !hChanged) return;
+      sizeCanvas();
+      makeStars();
+    }, 250);
+  });
 
   /* ------------------------------------------------------------
      2 · CURSOR / FINGER SPARKLE TRAIL
@@ -132,14 +166,14 @@
       setTimeout(() => el.remove(), 800);
     };
 
-    if (window.matchMedia("(pointer: fine)").matches) {
+    if (finePointer) {
       document.addEventListener("mousemove", (e) => spawn(e.clientX, e.clientY, false));
     } else {
+      /* Taps only, no touchmove. Spawning on every touchmove left up to ~18
+         glowing, box-shadowed, animating layers on screen at once — during a
+         scroll, which is the most expensive possible moment to do it. */
       document.addEventListener("touchstart", (e) => {
         for (const t of e.changedTouches) spawn(t.clientX, t.clientY, true);
-      }, { passive: true });
-      document.addEventListener("touchmove", (e) => {
-        for (const t of e.changedTouches) spawn(t.clientX, t.clientY, false);
       }, { passive: true });
     }
   }
@@ -263,6 +297,18 @@
     scrollTrigger: { trigger: hero, start: "10% top", end: "45% top", scrub: true },
   });
 
+  /* Without ScrollSmoother nothing reads [data-speed], so on touch the moon
+     would sit perfectly still while everything else drifted. Only .moon-wrap
+     gets a replacement: the other three data-speed layers are inset:0 overlays,
+     and translating those would expose the edge of their section. */
+  if (!smoother) {
+    gsap.to(".moon-wrap", {
+      y: 80,
+      ease: "none",
+      scrollTrigger: { trigger: hero, start: "top top", end: "100% top", scrub: true },
+    });
+  }
+
   $("#scrollBtn").addEventListener("click", () => {
     if (smoother) smoother.scrollTo("#reasons", true, "top 80px");
     else $("#reasons").scrollIntoView({ behavior: "smooth" });
@@ -288,7 +334,7 @@
   gsap.to("#progressBar", {
     scaleX: 1,
     ease: "none",
-    scrollTrigger: { start: 0, end: "max", scrub: 0.3 },
+    scrollTrigger: { start: 0, end: "max", scrub: scrubBar },
   });
 
   /* Active nav link */
@@ -568,7 +614,7 @@
           ...cstRange,
           /* long enough to iron out finger jitter without the section feeling
              like it is lagging behind the scroll */
-          scrub: 0.55,
+          scrub: scrubSoft,
           invalidateOnRefresh: true,
           /* rebuild the path and re-measure where each star sits on it, then
              repaint at the current point so a resize can't leave the stars
@@ -683,7 +729,7 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
       end: getEnd,
 
       pin: true,
-      scrub: 1,
+      scrub: scrubHold,
       anticipatePin: 1,
       invalidateOnRefresh: true,
       onRefresh: paintWishes,
@@ -704,7 +750,7 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
       start: "top top",
       end: getEnd,
 
-      scrub: 1,
+      scrub: scrubHold,
       invalidateOnRefresh: true,
     },
   });
@@ -741,7 +787,7 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
   gsap.to("#timelineFill", {
     height: "100%",
     ease: "none",
-    scrollTrigger: { trigger: ".timeline-wrap", start: "top 72%", end: "bottom 55%", scrub: 0.6 },
+    scrollTrigger: { trigger: ".timeline-wrap", start: "top 72%", end: "bottom 55%", scrub: scrubLine },
   });
 
   $$("[data-tl]").forEach((item, i) => {
@@ -773,7 +819,7 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
           start: "top 68%",
           end: () => "+=" + letterDist(),
           pin: true,
-          scrub: 1,
+          scrub: scrubHold,
           anticipatePin: 1,
           invalidateOnRefresh: true,
         },
@@ -800,7 +846,7 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
         start: "top top",
         end: () => "+=" + bloomDist(),
         pin: true,
-        scrub: 1,
+        scrub: scrubHold,
         anticipatePin: 1,
         invalidateOnRefresh: true,
         onEnter: () => {
@@ -980,7 +1026,13 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
     fwCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   sizeFireworks();
-  window.addEventListener("resize", sizeFireworks);
+  /* debounced for the same reason as the starfield: reading offsetWidth on
+     every resize event is a forced layout, and a phone fires them in bursts */
+  let fwResizeTimer = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(fwResizeTimer);
+    fwResizeTimer = setTimeout(sizeFireworks, 250);
+  });
 
   const FW_COLORS = ["#f7e0a6", "#e9c97e", "#f4b8c6", "#c3b5f5", "#9fd7f0"];
 
