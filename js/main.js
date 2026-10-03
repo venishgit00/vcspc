@@ -359,6 +359,16 @@
   const cstWalker = $("#cstWalker");
   const cstNodes  = $$("[data-cst]");
   const cstPaths  = [cstLine, cstGlow].filter(Boolean);
+
+  /* below 700px the star map keeps its desktop shape and is pinned and read
+     sideways instead of downward, so nothing has to shrink to squeeze it in */
+  const cstSideways = !!window.matchMedia("(max-width: 700px)").matches;
+  const cstStage    = $(".cst-stage");
+  const cstFrame    = $(".cst-viewport");
+  const getCstDist  = () =>
+    cstStage && cstFrame ? Math.max(0, cstStage.offsetWidth - cstFrame.clientWidth) : 0;
+  const cstEnd      = () => "+=" + Math.max(1, getCstDist());
+
   let cstLen = 0;
   let cstMeasured = false;
 
@@ -381,7 +391,9 @@
 
   function buildConstellation() {
     if (!cstField || !cstLine || !cstNodes.length) return;
-    const box = cstField.getBoundingClientRect();
+    /* measure against the stage, not the section: on phones the stage is what
+       travels, and dot-minus-stage stays correct whatever it is translated to */
+    const box = (cstStage || cstField).getBoundingClientRect();
     if (!box.width || !box.height) return;
 
     /* measure every star, then stitch a smooth curve through them */
@@ -430,12 +442,14 @@
     const cstLabels = cstNodes.map((n) => n.querySelector(".cst-label"));
 
     if (!reduceMotion) {
+      const cstRange = cstSideways
+        ? { trigger: "#reasons", start: "top top", end: cstEnd, pin: true, anticipatePin: 1 }
+        : { trigger: "#reasons", start: "top 74%", end: "bottom 70%" };
+
       const cstTL = gsap.timeline({
         defaults: { ease: "none" },
         scrollTrigger: {
-          trigger: "#reasons",
-          start: "top 74%",
-          end: "bottom 70%",
+          ...cstRange,
           scrub: 0.8,
           invalidateOnRefresh: true,
           onRefresh: buildConstellation,
@@ -460,9 +474,8 @@
              .to(cstWalker, { opacity: 0, duration: 0.4 }, 4.8);
 
         ScrollTrigger.create({
-          trigger: "#reasons",
-          start: "top 74%",
-          end: "bottom 70%",
+          ...cstRange,
+          pin: false,
           scrub: true,
           onUpdate: (self) => {
             if (!cstLen) return;
@@ -470,6 +483,13 @@
             cstWalker.style.transform = `translate(${pt.x}px, ${pt.y}px) translate(-50%, -50%)`;
           },
         });
+      }
+
+      /* on phones the whole star map slides in from the right, paced to
+         exactly the same stretch of scroll as the line drawing itself — added
+         last so its duration covers the finished timeline, not a partial one */
+      if (cstSideways && cstStage) {
+        cstTL.to(cstStage, { x: () => -getCstDist(), ease: "none", duration: cstTL.duration() }, 0);
       }
     } else {
       gsap.set(cstOrbs, { scale: 1, opacity: 1 });

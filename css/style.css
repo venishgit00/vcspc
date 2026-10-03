@@ -495,6 +495,14 @@ body {
   will-change: transform, opacity;
 }
 
+/* the frame that clips the stage on phones; transparent on desktop */
+.cst-viewport {
+  position: relative;
+}
+.cst-stage {
+  position: relative;
+}
+
 .cst-grid {
   position: relative;
   z-index: 2;
@@ -1366,32 +1374,48 @@ body {
   .disc { bottom: 20px; right: 20px; width: 62px; height: 62px; }
 }
 
-/* the constellation folds into a single readable column */
+/* on phones the star map keeps its desktop shape — same scattered nodes, same
+   connectors, same travelling spark — and is pinned and traversed sideways
+   instead of downward, so nothing has to shrink to squeeze it into 375px */
 @media (max-width: 700px) {
   .constellation { padding: 0; }
-  .cst-grid { grid-template-columns: 1fr; gap: 30px; }
-  .cst-node,
-  .cst-node:nth-child(1),
-  .cst-node:nth-child(2),
-  .cst-node:nth-child(3),
-  .cst-node:nth-child(4),
-  .cst-node:nth-child(5),
-  .cst-node:nth-child(6),
-  .cst-node:nth-child(even),
-  .cst-node:nth-child(odd) { transform: none !important; }
-  .cst-node { padding-top: 0; padding-left: 62px; }
-  .cst-node.r .cst-label { margin-left: 0; text-align: left; }
-  .cst-dot {
-    left: 0;
-    top: 2px;
-    width: 42px;
-    height: 42px;
-    transform: none;
+
+  /* the section is pinned now, so all of it has to live inside one screen */
+  #reasons {
+    padding-top: clamp(28px, 7vw, 56px);
+    padding-bottom: clamp(24px, 6vw, 48px);
   }
-  .cst-orb { width: 42px; height: 42px; }
-  .cst-orb svg { width: 19px; height: 19px; }
+
+  .cst-viewport { overflow: hidden; }
+  .cst-stage { width: max-content; }
+
+  .cst-grid {
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(18px, 5vw, 30px);
+    padding-right: 10vw;
+  }
+  .cst-node {
+    flex: 0 0 clamp(252px, 74vw, 330px);
+    padding-top: clamp(30px, 8vw, 46px);
+  }
+
+  /* the desktop scatter comes back, so the stars keep their uneven heights */
+  .cst-node:nth-child(1) { transform: translateY(22px); }
+  .cst-node:nth-child(2) { transform: translateY(-14px); }
+  .cst-node:nth-child(3) { transform: translateY(34px); }
+  .cst-node:nth-child(4) { transform: translateY(-24px); }
+  .cst-node:nth-child(5) { transform: translateY(16px); }
+  .cst-node:nth-child(6) { transform: translateY(-8px); }
+
+  .cst-label { max-width: 100%; }
+  .cst-node.r .cst-label { margin-left: 0; text-align: left; }
+  .cst-dot,
+  .cst-orb,
   .cst-dot::after { width: 42px; height: 42px; }
-  .cst-lines, .cst-walker { display: none; }
+  .cst-orb svg { width: 19px; height: 19px; }
+  .cst-title { font-size: 1.2rem; }
+  .cst-text { font-size: 0.88rem; line-height: 1.72; }
 }
 
 /* short viewports: the pinned wishes section must still fit on screen */
@@ -1424,6 +1448,13 @@ body {
    its subtitle and the lanterns tighten up until the whole pinned frame
    fits without the strip or the progress bar falling off the bottom */
 @media (orientation: landscape) and (max-height: 560px) {
+  #reasons { padding-top: 16px; padding-bottom: 12px; }
+  #reasons .section-sub { display: none; }
+  .cst-node { padding-top: 20px; }
+  .cst-index { margin-bottom: 5px; }
+  .cst-title { font-size: 1.05rem; margin-bottom: 6px; }
+  .cst-text { font-size: 0.8rem; line-height: 1.56; }
+
   .wishes { padding-top: 18px; padding-bottom: 14px; }
   .wishes .section-title { font-size: clamp(1.2rem, 3vw, 1.6rem); }
   .wishes .section-sub { display: none; }
