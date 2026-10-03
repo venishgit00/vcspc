@@ -1419,3 +1419,28 @@ body {
   .wishes .section-head { margin-bottom: 14px; }
   .wishes-foot { margin-top: 12px; }
 }
+
+/* rotated phones: there is barely any height to spend, so the heading sheds
+   its subtitle and the lanterns tighten up until the whole pinned frame
+   fits without the strip or the progress bar falling off the bottom */
+@media (orientation: landscape) and (max-height: 560px) {
+  .wishes { padding-top: 18px; padding-bottom: 14px; }
+  .wishes .section-title { font-size: clamp(1.2rem, 3vw, 1.6rem); }
+  .wishes .section-sub { display: none; }
+  .wishes .section-head { margin-bottom: 10px; }
+  .wish-card {
+    flex-basis: clamp(250px, 44vw, 340px);
+    min-height: 0;
+    padding: 16px 18px;
+    border-radius: 20px;
+  }
+  .wish-num { font-size: clamp(2.6rem, 5vw, 3.4rem); }
+  .wish-title { font-size: clamp(1rem, 2.3vw, 1.18rem); }
+  .wish-rule { margin: 10px 0; }
+  .wish-text { font-size: 0.82rem; line-height: 1.62; }
+  .wish-star { right: 14px; bottom: 10px; font-size: 0.7rem; }
+  .wishes-end { flex-basis: clamp(250px, 40vw, 320px); }
+  .wishes-end-script { font-size: clamp(1.5rem, 3vw, 2rem); }
+  .wishes-end-line { margin: 10px 0 0; font-size: 0.86rem; line-height: 1.7; }
+  .wishes-foot { margin-top: 8px; }
+}
