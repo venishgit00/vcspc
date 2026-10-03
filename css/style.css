@@ -1382,8 +1382,8 @@ body {
 
   /* the section is pinned now, so all of it has to live inside one screen */
   #reasons {
-    padding-top: clamp(28px, 7vw, 56px);
-    padding-bottom: clamp(24px, 6vw, 48px);
+    padding-top: clamp(14px, 4vw, 28px);
+    padding-bottom: clamp(12px, 3vw, 24px);
   }
 
   .cst-viewport { overflow: hidden; }
@@ -1393,11 +1393,16 @@ body {
     display: flex;
     align-items: flex-start;
     gap: clamp(18px, 5vw, 30px);
-    padding-right: 10vw;
+    /* the stage travels, so it has to carry room for the desktop scatter:
+       45px up for the highest negative offset plus the half-orb that sits
+       above each node's edge, 60px down for the lowest positive offset and
+       the ragged label heights. Without this the orbs get sliced off the top
+       and the lowest node loses the last lines of its text. */
+    padding: 45px 10vw 60px;
   }
   .cst-node {
     flex: 0 0 clamp(252px, 74vw, 330px);
-    padding-top: clamp(30px, 8vw, 46px);
+    padding-top: 24px;
   }
 
   /* the desktop scatter comes back, so the stars keep their uneven heights */
@@ -1414,8 +1419,9 @@ body {
   .cst-orb,
   .cst-dot::after { width: 42px; height: 42px; }
   .cst-orb svg { width: 19px; height: 19px; }
-  .cst-title { font-size: 1.2rem; }
-  .cst-text { font-size: 0.88rem; line-height: 1.72; }
+  .cst-index { margin-bottom: 6px; }
+  .cst-title { font-size: 1.2rem; margin-bottom: 8px; }
+  .cst-text { font-size: 0.85rem; line-height: 1.66; }
 }
 
 /* short viewports: the pinned wishes section must still fit on screen */
@@ -1448,12 +1454,15 @@ body {
    its subtitle and the lanterns tighten up until the whole pinned frame
    fits without the strip or the progress bar falling off the bottom */
 @media (orientation: landscape) and (max-height: 560px) {
-  #reasons { padding-top: 16px; padding-bottom: 12px; }
+  #reasons { padding-top: 10px; padding-bottom: 8px; }
+  #reasons .section-eyebrow { font-size: 0.62rem; }
+  #reasons .section-title { font-size: clamp(1.05rem, 3.2vw, 1.45rem); }
+  #reasons .section-head { margin-bottom: 8px; }
   #reasons .section-sub { display: none; }
-  .cst-node { padding-top: 20px; }
-  .cst-index { margin-bottom: 5px; }
-  .cst-title { font-size: 1.05rem; margin-bottom: 6px; }
-  .cst-text { font-size: 0.8rem; line-height: 1.56; }
+  .cst-node { padding-top: 22px; }
+  .cst-index { margin-bottom: 2px; }
+  .cst-title { font-size: 0.95rem; margin-bottom: 3px; }
+  .cst-text { font-size: 0.72rem; line-height: 1.42; }
 
   .wishes { padding-top: 18px; padding-bottom: 14px; }
   .wishes .section-title { font-size: clamp(1.2rem, 3vw, 1.6rem); }
