@@ -219,12 +219,12 @@
       .to('[data-hero="eyebrow"]', { opacity: 1, duration: 1.1 }, 0.1)
       .from(titleChars, { yPercent: 115, duration: 1.3, stagger: 0.04, ease: "power4.out" }, 0.3)
       .to('[data-hero="sub"]', { opacity: 1, duration: 1.2 }, 1)
-      .to(".hero-btn", { opacity: 1, duration: 1 }, 1.2)
+      .to(".hero-hint", { opacity: 1, duration: 1 }, 1.2)
       .to("#scrollCue", { opacity: 1, duration: 1 }, 1.4)
       .from("#moon", { y: -80, opacity: 0, duration: 1.6, ease: "power2.out" }, 0.5);
   } else {
     gsap.set(
-      "[data-hero='eyebrow'], [data-hero='sub'], .hero-btn, #scrollCue, #moon",
+      "[data-hero='eyebrow'], [data-hero='sub'], .hero-hint, #scrollCue, #moon",
       { opacity: 1 }
     );
   }
@@ -261,11 +261,6 @@
     opacity: 0,
     ease: "none",
     scrollTrigger: { trigger: hero, start: "10% top", end: "45% top", scrub: true },
-  });
-
-  $("#scrollBtn").addEventListener("click", () => {
-    if (smoother) smoother.scrollTo("#reasons", true, "top 80px");
-    else $("#reasons").scrollIntoView({ behavior: "smooth" });
   });
 
   /* Smooth nav clicks */
