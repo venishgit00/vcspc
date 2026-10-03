@@ -441,6 +441,34 @@
     const cstOrbs = cstNodes.map((n) => n.querySelector(".cst-orb"));
     const cstLabels = cstNodes.map((n) => n.querySelector(".cst-label"));
 
+    /* Each star lights up when it has travelled far enough to sit in the middle
+       of the screen. Both the distance and the arrival point are re-read every
+       frame, so rotating the phone or resizing re-times the whole reveal to the
+       new geometry instead of keeping positions that were baked in at load. */
+    const revealOnArrival = (self) => {
+      const dist = getCstDist();
+      if (!dist || !cstStage || !cstFrame) return;
+
+      const stageBox = cstStage.getBoundingClientRect();
+      const frameW = cstFrame.clientWidth;
+      const POP = 0.06; /* a star lands over 6% of the journey, not 6 seconds */
+
+      for (let i = 0; i < cstNodes.length; i++) {
+        const orb = cstOrbs[i], label = cstLabels[i];
+        if (!orb || !label) continue;
+
+        const box = cstNodes[i].getBoundingClientRect();
+        /* both rects carry the same translate, so the difference is stable */
+        const centre = box.left + box.width / 2 - stageBox.left;
+        const arrive = Math.min(0.92, Math.max(0.01, (centre - frameW * 0.42) / dist));
+        const t = Math.min(1, Math.max(0, (self.progress - arrive) / POP));
+        const pop = t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.pow(1 - t, 3);
+
+        gsap.set(orb, { scale: pop, opacity: t });
+        gsap.set(label, { opacity: t, y: 26 * (1 - t) });
+      }
+    };
+
     if (!reduceMotion) {
       const cstRange = cstSideways
         ? { trigger: "#reasons", start: "top top", end: cstEnd, pin: true, anticipatePin: 1 }
@@ -459,20 +487,31 @@
       /* the line writes itself across the sky */
       cstTL.fromTo(cstPaths, { strokeDashoffset: () => cstLen }, { strokeDashoffset: 0, duration: 5 }, 0);
 
-      /* and one star at a time takes its place */
-      cstOrbs.forEach((orb, i) => {
-        cstTL
-          .fromTo(orb, { scale: 0, opacity: 0 },
-            { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2.4)" }, 1.3 + i * 0.2)
-          .fromTo(cstLabels[i], { opacity: 0, y: 26 },
-            { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 1.44 + i * 0.2);
-      });
+      /* on a desktop every star shares the screen at once, so they can arrive in a
+         gentle cascade. On a phone the map is a journey and a fixed cascade
+         would light all six inside the first 44% of the scroll and then leave
+         the remaining 56% with nothing to show, so there each star is timed to
+         its own arrival on screen instead. */
+      if (cstSideways) {
+        /* handled per-frame by revealOnArrival */
+      } else {
+        cstOrbs.forEach((orb, i) => {
+          cstTL
+            .fromTo(orb, { scale: 0, opacity: 0 },
+              { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2.4)" }, 1.3 + i * 0.2)
+            .fromTo(cstLabels[i], { opacity: 0, y: 26 },
+              { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 1.44 + i * 0.2);
+        });
+      }
 
       /* a spark of light runs the line as it draws */
       if (cstWalker) {
         cstTL.fromTo(cstWalker, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.1)
              .to(cstWalker, { opacity: 0, duration: 0.4 }, 4.8);
+      }
 
+      /* one scrubbed pass drives the spark's position */
+      if (cstWalker) {
         ScrollTrigger.create({
           ...cstRange,
           pin: false,
@@ -485,12 +524,40 @@
         });
       }
 
+      /* The arrivals have to ride the SAME smoothing as the stage, so they use
+         the timeline's scrub value rather than raw scroll progress. Reading
+         progress off a trigger with no animation attached would fire every pop
+         up to a full scrub-length early — a star would light while still off
+         the side of the screen. */
+      if (cstSideways) {
+        const cstReveal = { p: 0 };
+        gsap.to(cstReveal, {
+          p: 1,
+          ease: "none",
+          scrollTrigger: {
+            ...cstRange,
+            pin: false,
+            scrub: 0.8,
+            invalidateOnRefresh: true,
+            /* rebuild the path, then repaint the stars at whatever point of
+               the journey we are already at, so a resize can't leave them
+               blank or stuck at full brightness */
+            onRefresh: () => { buildConstellation(); revealOnArrival({ progress: cstReveal.p }); },
+          },
+          onUpdate: () => revealOnArrival({ progress: cstReveal.p }),
+        });
+      }
+
       /* on phones the whole star map slides in from the right, paced to
          exactly the same stretch of scroll as the line drawing itself — added
          last so its duration covers the finished timeline, not a partial one */
       if (cstSideways && cstStage) {
         cstTL.to(cstStage, { x: () => -getCstDist(), ease: "none", duration: cstTL.duration() }, 0);
       }
+
+      /* seed the hidden state so no star ever flashes in before the first
+         scroll lands */
+      if (cstSideways) revealOnArrival({ progress: 0 });
     } else {
       gsap.set(cstOrbs, { scale: 1, opacity: 1 });
       gsap.set(cstLabels, { opacity: 1, y: 0 });
