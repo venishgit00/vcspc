@@ -441,27 +441,62 @@
     const cstOrbs = cstNodes.map((n) => n.querySelector(".cst-orb"));
     const cstLabels = cstNodes.map((n) => n.querySelector(".cst-label"));
 
-    /* Each star lights up when it has travelled far enough to sit in the middle
-       of the screen. Both the distance and the arrival point are re-read every
-       frame, so rotating the phone or resizing re-times the whole reveal to the
-       new geometry instead of keeping positions that were baked in at load. */
-    const revealOnArrival = (self) => {
-      const dist = getCstDist();
-      if (!dist || !cstStage || !cstFrame) return;
+    /* Where along the drawn line each star actually sits. The spark walks the
+       path in step with progress, so a star's own fraction of the path IS the
+       moment the spark reaches it — that is the only anchor that keeps the
+       copy and the star honest to each other on every screen size. Measured by
+       walking the path, not guessed from x position, because a node's dot can
+       sit anywhere along --dx inside its own column. */
+    const cstStopAt = (self, i) => {
+      if (!cstLen) return 1;
+      const node = cstNodes[i];
+      const dot = node && node.querySelector(".cst-dot");
+      if (!dot) return 1;
+      const box = (cstStage || cstField).getBoundingClientRect();
+      const d = dot.getBoundingClientRect();
+      const tx = d.left + d.width / 2 - box.left;
+      const ty = d.top + d.height / 2 - box.top;
+      /* coarse sweep, then a short binary refine — getPointAtLength is not
+         monotonic in x, so a plain ratio guess can land on the wrong pass */
+      let best = 0, bestD = Infinity;
+      for (let k = 0; k <= 60; k++) {
+        const f = k / 60;
+        const p = cstLine.getPointAtLength(cstLen * f);
+        const dd = (p.x - tx) * (p.x - tx) + (p.y - ty) * (p.y - ty);
+        if (dd < bestD) { bestD = dd; best = f; }
+      }
+      let lo = Math.max(0, best - 1 / 60), hi = Math.min(1, best + 1 / 60);
+      for (let k = 0; k < 18; k++) {
+        const mid = (lo + hi) / 2;
+        const pm = cstLine.getPointAtLength(cstLen * mid);
+        const dl = (pm.x - tx) * (pm.x - tx) + (pm.y - ty) * (pm.y - ty);
+        const pl = cstLine.getPointAtLength(cstLen * lo);
+        const d0 = (pl.x - tx) * (pl.x - tx) + (pl.y - ty) * (pl.y - ty);
+        if (dl < d0) hi = mid; else lo = mid;
+      }
+      return Math.min(1, Math.max(0, (lo + hi) / 2));
+    };
 
-      const stageBox = cstStage.getBoundingClientRect();
-      const frameW = cstFrame.clientWidth;
+    /* Each star lights up as the spark arrives at it. The distance and the
+       arrival point are re-read every frame, so rotating the phone or resizing
+       re-times the whole reveal to the new geometry instead of keeping
+       positions that were baked in at load. The pop completes slightly BEFORE
+       the spark lands, so the copy is already readable the instant it arrives
+       rather than fading in underneath it. */
+    const revealOnArrival = (self) => {
+      /* cstLen is the real gate: on desktop the stage never travels, so the
+         travel distance is legitimately 0 and must NOT skip the reveal. */
+      if (!cstLen) return;
+
       const POP = 0.06; /* a star lands over 6% of the journey, not 6 seconds */
 
       for (let i = 0; i < cstNodes.length; i++) {
         const orb = cstOrbs[i], label = cstLabels[i];
         if (!orb || !label) continue;
 
-        const box = cstNodes[i].getBoundingClientRect();
-        /* both rects carry the same translate, so the difference is stable */
-        const centre = box.left + box.width / 2 - stageBox.left;
-        const arrive = Math.min(0.92, Math.max(0.01, (centre - frameW * 0.42) / dist));
-        const t = Math.min(1, Math.max(0, (self.progress - arrive) / POP));
+        const arrive = cstStopAt(self, i);
+        /* finish the reveal just ahead of the spark */
+        const t = Math.min(1, Math.max(0, (self.progress - (arrive - POP)) / POP));
         const pop = t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.pow(1 - t, 3);
 
         gsap.set(orb, { scale: pop, opacity: t });
@@ -487,22 +522,11 @@
       /* the line writes itself across the sky */
       cstTL.fromTo(cstPaths, { strokeDashoffset: () => cstLen }, { strokeDashoffset: 0, duration: 5 }, 0);
 
-      /* on a desktop every star shares the screen at once, so they can arrive in a
-         gentle cascade. On a phone the map is a journey and a fixed cascade
-         would light all six inside the first 44% of the scroll and then leave
-         the remaining 56% with nothing to show, so there each star is timed to
-         its own arrival on screen instead. */
-      if (cstSideways) {
-        /* handled per-frame by revealOnArrival */
-      } else {
-        cstOrbs.forEach((orb, i) => {
-          cstTL
-            .fromTo(orb, { scale: 0, opacity: 0 },
-              { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2.4)" }, 1.3 + i * 0.2)
-            .fromTo(cstLabels[i], { opacity: 0, y: 26 },
-              { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 1.44 + i * 0.2);
-        });
-      }
+      /* The star lights as the spark reaches it, on every screen size. An
+         earlier version used a fixed cascade on desktop; that lit the copy
+         while the spark was still travelling to it, so the text could sit
+         dark on a star the spark had not arrived at yet. Both the copy and the
+         logo now wait on the same measured arrival point. */
 
       /* a spark of light runs the line as it draws */
       if (cstWalker) {
@@ -528,8 +552,9 @@
          the timeline's scrub value rather than raw scroll progress. Reading
          progress off a trigger with no animation attached would fire every pop
          up to a full scrub-length early — a star would light while still off
-         the side of the screen. */
-      if (cstSideways) {
+         the side of the screen. This runs on desktop too, where the spark
+         still walks the line and the copy must meet it at the same moment. */
+      {
         const cstReveal = { p: 0 };
         gsap.to(cstReveal, {
           p: 1,

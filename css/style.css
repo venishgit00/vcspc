@@ -562,12 +562,22 @@ body {
 .cst-node:nth-child(5) .cst-dot::after { animation-delay: 2s; }
 .cst-node:nth-child(6) .cst-dot::after { animation-delay: 2.5s; }
 
+/* Each star sits at --dx inside its own cell, and its text has to start on
+   that same x so the copy reads as belonging to the star above it. Aligning
+   the label to the cell edge instead would leave right-aligned nodes with
+   their text drifting away from their own star. */
 .cst-label {
-  max-width: 310px;
+  margin-left: var(--dx, 0%);
+  max-width: min(310px, calc(100% - var(--dx, 0%)));
   will-change: transform;
 }
 .cst-node.r .cst-label {
+  /* margin-left:auto matters once max-width clamps the box: without it the
+     clamped label hugs the column's left edge and its right edge drifts off
+     the star it belongs to. auto pushes the clamped box back to the right. */
   margin-left: auto;
+  margin-right: calc(100% - var(--dx, 0%));
+  max-width: min(310px, var(--dx, 0%));
   text-align: right;
 }
 .cst-index {
@@ -1413,8 +1423,15 @@ body {
   .cst-node:nth-child(5) { transform: translateY(16px); }
   .cst-node:nth-child(6) { transform: translateY(-8px); }
 
-  .cst-label { max-width: 100%; }
-  .cst-node.r .cst-label { margin-left: 0; text-align: left; }
+  /* the star keeps its own x here too, so the label override below has to
+     keep the same anchoring instead of snapping to the cell edge */
+  .cst-label { max-width: min(310px, calc(100% - var(--dx, 0%))); }
+  .cst-node.r .cst-label {
+    margin-left: auto;
+    margin-right: calc(100% - var(--dx, 0%));
+    max-width: min(310px, var(--dx, 0%));
+    text-align: right;
+  }
   .cst-dot,
   .cst-orb,
   .cst-dot::after { width: 42px; height: 42px; }
