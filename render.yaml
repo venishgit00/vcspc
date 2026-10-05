@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: vc's-scam
+    name: vc-scam
     runtime: static
     staticPublishPath: .
     autoDeployTrigger: commit
