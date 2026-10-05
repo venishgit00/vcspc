@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: venish-vcspc
+    name: vc's-scam
     runtime: static
     staticPublishPath: .
     autoDeployTrigger: commit
