@@ -631,16 +631,26 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
   /* ---- depth: each lantern dims, softens and drifts as it passes ---- */
   const wishCards = $$("[data-wish]");
   const wishLifts = wishCards.map((_, i) => (i % 2 ? 1 : -1) * 22);
+  const wishNearStep = wishCards.map(() => -1);
 
   function paintWishes() {
     if (!wishCards.length) return;
     const vw = window.innerWidth;
-    wishCards.forEach((card, i) => {
+    const infos = wishCards.map((card) => {
       const r = card.getBoundingClientRect();
-      if (!r.width) return;
+      if (!r.width) return null;
       const p = gsap.utils.clamp(-1.5, 1.5, (r.left + r.width / 2 - vw / 2) / (vw / 2));
-      const near = 1 - Math.min(1, Math.abs(p));
-      card.style.setProperty("--near", near.toFixed(3));
+      return { p, near: 1 - Math.min(1, Math.abs(p)) };
+    });
+    wishCards.forEach((card, i) => {
+      const info = infos[i];
+      if (!info) return;
+      const p = info.p, near = info.near;
+      const step = Math.round(near / 0.04);
+      if (step !== wishNearStep[i]) {
+        wishNearStep[i] = step;
+        card.style.setProperty("--near", (step * 0.04).toFixed(2));
+      }
       if (reduceMotion) return;
       gsap.set(card, {
         opacity: 0.5 + near * 0.5,
@@ -678,7 +688,7 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
       end: getEnd,
 
       pin: true,
-      scrub: 1,
+      scrub: 0.7,
       anticipatePin: 1,
       invalidateOnRefresh: true,
       onRefresh: paintWishes,
@@ -699,7 +709,7 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
       start: "top top",
       end: getEnd,
 
-      scrub: 1,
+      scrub: 0.7,
       invalidateOnRefresh: true,
     },
   });
