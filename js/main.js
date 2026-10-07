@@ -22,7 +22,7 @@
     smoother = ScrollSmoother.create({
       wrapper: "#smooth-wrapper",
       content: "#smooth-content",
-      smooth: 1.2,
+      smooth: 0.8,
       effects: true,
       smoothTouch: 0.1,
     });
@@ -109,7 +109,7 @@
   if (!reduceMotion) {
     requestAnimationFrame(animate);
     setInterval(spawnShootingStar, 4200 + Math.random() * 2500);
-    gsap.ticker.lagSmoothing(0);
+    gsap.ticker.lagSmoothing(500, 33);
   } else {
     drawStars(0);
   }
@@ -283,7 +283,7 @@
   gsap.to("#progressBar", {
     scaleX: 1,
     ease: "none",
-    scrollTrigger: { start: 0, end: "max", scrub: 0.3 },
+    scrollTrigger: { start: 0, end: "max", scrub: 0.15 },
   });
 
   /* Active nav link */
@@ -563,7 +563,7 @@
           ...cstRange,
           /* long enough to iron out finger jitter without the section feeling
              like it is lagging behind the scroll */
-          scrub: 0.55,
+          scrub: 0.3,
           invalidateOnRefresh: true,
           /* rebuild the path and re-measure where each star sits on it, then
              repaint at the current point so a resize can't leave the stars
@@ -635,11 +635,16 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
   function paintWishes() {
     if (!wishCards.length) return;
     const vw = window.innerWidth;
-    wishCards.forEach((card, i) => {
+    const infos = wishCards.map((card) => {
       const r = card.getBoundingClientRect();
-      if (!r.width) return;
+      if (!r.width) return null;
       const p = gsap.utils.clamp(-1.5, 1.5, (r.left + r.width / 2 - vw / 2) / (vw / 2));
-      const near = 1 - Math.min(1, Math.abs(p));
+      return { p, near: 1 - Math.min(1, Math.abs(p)) };
+    });
+    wishCards.forEach((card, i) => {
+      const info = infos[i];
+      if (!info) return;
+      const p = info.p, near = info.near;
       card.style.setProperty("--near", near.toFixed(3));
       if (reduceMotion) return;
       gsap.set(card, {
@@ -678,7 +683,7 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
       end: getEnd,
 
       pin: true,
-      scrub: 1,
+      scrub: 0.5,
       anticipatePin: 1,
       invalidateOnRefresh: true,
       onRefresh: paintWishes,
@@ -699,7 +704,7 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
       start: "top top",
       end: getEnd,
 
-      scrub: 1,
+      scrub: 0.5,
       invalidateOnRefresh: true,
     },
   });
@@ -736,7 +741,7 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
   gsap.to("#timelineFill", {
     height: "100%",
     ease: "none",
-    scrollTrigger: { trigger: ".timeline-wrap", start: "top 72%", end: "bottom 55%", scrub: 0.6 },
+    scrollTrigger: { trigger: ".timeline-wrap", start: "top 72%", end: "bottom 55%", scrub: 0.3 },
   });
 
   $$("[data-tl]").forEach((item, i) => {
@@ -768,7 +773,7 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
           start: "top 68%",
           end: () => "+=" + letterDist(),
           pin: true,
-          scrub: 1,
+          scrub: 0.5,
           anticipatePin: 1,
           invalidateOnRefresh: true,
         },
@@ -795,7 +800,7 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
         start: "top top",
         end: () => "+=" + bloomDist(),
         pin: true,
-        scrub: 1,
+        scrub: 0.5,
         anticipatePin: 1,
         invalidateOnRefresh: true,
         onEnter: () => {
