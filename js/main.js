@@ -865,14 +865,21 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
   if (qYes && qNo) {
     const NO_LABELS = ["No", "nope 🙈", "not today 😌", "nice try 😄", "just say yes 💛", "the other one!"];
     let dodges = 0;
+    let lastDodge = 0;
     const qSection = $("#question");
 
     const dodge = () => {
+      const now = performance.now();
+      if (now - lastDodge < 150) return;
+      lastDodge = now;
+
       const sr = qSection.getBoundingClientRect();
       const yr = qYes.getBoundingClientRect();
+      const curX = parseFloat(gsap.getProperty(qNo, "x")) || 0;
+      const curY = parseFloat(gsap.getProperty(qNo, "y")) || 0;
       const nRect = qNo.getBoundingClientRect();
-      const ncX = nRect.left + nRect.width / 2;
-      const ncY = nRect.top + nRect.height / 2;
+      const ncX = nRect.left + nRect.width / 2 - curX;
+      const ncY = nRect.top + nRect.height / 2 - curY;
       const noW = qNo.offsetWidth;
       const noH = qNo.offsetHeight;
       const maxX = Math.max(sr.width / 2 - noW / 2 - 12, 40);
@@ -887,7 +894,8 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
                         cy + noH / 2 > yr.top && cy - noH / 2 < yr.bottom;
         const inside = cx - noW / 2 > sr.left && cx + noW / 2 < sr.right &&
                        cy - noH / 2 > sr.top && cy + noH / 2 < sr.bottom;
-        if (!hitsYes && inside) break;
+        const away = (x - curX) * (x - curX) + (y - curY) * (y - curY) > 55 * 55;
+        if (!hitsYes && inside && away) break;
       }
       gsap.to(qNo, { x, y, rotation: gsap.utils.random(-14, 14), duration: 0.25, ease: "power3.out", overwrite: "auto" });
       gsap.fromTo(qNo, { scale: 1 }, { scale: 1.12, duration: 0.12, yoyo: true, repeat: 1, ease: "power2.out" });
@@ -895,7 +903,6 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
       dodges++;
     };
 
-    qNo.addEventListener("pointerenter", dodge);
     qNo.addEventListener("pointerdown", (e) => { e.preventDefault(); dodge(); });
     qNo.addEventListener("touchstart", (e) => { e.preventDefault(); dodge(); }, { passive: false });
     qNo.addEventListener("click", (e) => { e.preventDefault(); dodge(); });
