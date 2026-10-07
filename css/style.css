@@ -1258,8 +1258,9 @@ body {
     0 0 0 3px rgba(233, 201, 126, 0.28),
     0 10px 30px rgba(0, 0, 0, 0.6),
     0 0 0 1px rgba(255, 255, 255, 0.05);
-  transition: box-shadow 0.4s var(--ease);
+  transition: box-shadow 0.4s var(--ease), transform 0.3s var(--ease);
 }
+.disc:hover { transform: scale(1.06); }
 .disc::before {           /* vinyl grooves */
   content: "";
   position: absolute;
@@ -1316,6 +1317,29 @@ body {
   background: rgba(10, 12, 28, 0.7);
   z-index: 4;
 }
+.disc.paused .disc-glow { animation: glowBreath 3.4s ease-in-out infinite; }
+@keyframes glowBreath {
+  0%, 100% { opacity: 0.1; }
+  50%      { opacity: 0.5; }
+}
+
+.disc-hint {
+  position: fixed;
+  right: 112px;
+  bottom: 54px;
+  z-index: 100;
+  font-family: var(--font-hand);
+  font-size: 1.05rem;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  color: rgba(233, 201, 126, 0.7);
+  text-shadow: 0 0 14px rgba(233, 201, 126, 0.35);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.5s var(--ease);
+}
+.disc-hint:hover { opacity: 1; }
+.disc.playing ~ .disc-hint { opacity: 0; pointer-events: none; }
 
 /* ---------- Cursor sparkles ---------- */
 .cursor-spark {
@@ -1352,6 +1376,7 @@ body {
   }
   .cst-label, .cst-orb, .wish-card { opacity: 1 !important; transform: none !important; }
   .disc.playing { animation: none; }
+  .disc.paused .disc-glow { animation: none; }
 }
 
 /* ---------- Responsive ---------- */
@@ -1376,6 +1401,7 @@ body {
   .bloom-flower { top: 26%; }
   .bloom-stem { height: 32vh; }
   .disc { bottom: 20px; right: 20px; width: 62px; height: 62px; }
+  .disc-hint { right: 92px; bottom: 41px; font-size: 0.95rem; }
 }
 
 /* on phones the star map keeps its desktop shape — same scattered nodes, same

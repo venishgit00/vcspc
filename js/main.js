@@ -1112,6 +1112,8 @@ if (wishesTrack && wishesViewport && !reduceMotion) {
   }
 
   disc.addEventListener("click", toggleMusic);
+  const discHint = $("#discHint");
+  if (discHint) discHint.addEventListener("click", toggleMusic);
   disc.classList.add("paused");
 
   /* ------------------------------------------------------------
